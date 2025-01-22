@@ -13,6 +13,12 @@ RUN keytool -import -trustcacerts \
   -file /etc/x509/https/fullchain.pem
 
 WORKDIR /opt/keycloak
+
+COPY server/scim-for-keycloak-*.jar /opt/keycloak/providers/
+COPY server/license-key-1406.txt /tmp/
+RUN echo "spi-theme-welcome-theme=scim" >> /opt/keycloak/conf/keycloak.conf
+RUN echo "spi-realm-restapi-extension-scim-license-key=$(cat /tmp/license-key-1406.txt)" >> /opt/keycloak/conf/keycloak.conf
+
 USER keycloak
 RUN /opt/keycloak/bin/kc.sh build
 
