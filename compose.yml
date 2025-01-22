@@ -1,0 +1,85 @@
+version: "3.8"
+
+x-db-base: &db-base
+  image: postgres:17.2
+  environment:
+    POSTGRES_DB: keycloak
+    POSTGRES_USER: db_admin
+    POSTGRES_PASSWORD: db_password
+  networks:
+    keycloak-network:
+
+x-keycloak-env: &keycloak-env
+  KC_HTTPS_CERTIFICATE_KEY_FILE: /etc/x509/https/privkey.pem
+  KC_HTTPS_CERTIFICATE_FILE: /etc/x509/https/fullchain.pem
+  KC_DB: postgres
+  KC_DB_USERNAME: db_admin
+  KC_DB_PASSWORD: db_password
+  KC_HOSTNAME: 0.0.0.0
+  KC_HOSTNAME_PORT: 8443
+  KEYCLOAK_ADMIN: admin
+  KEYCLOAK_ADMIN_PASSWORD: password
+  KC_FEATURES: organization
+
+services:
+  nginx:
+    depends_on:
+      - keycloak-server
+      - keycloak-client
+    image: nginx:latest
+    container_name: keycloak-proxy
+    ports:
+      - "8443:8443" # プロキシがリッスンするポート
+    networks:
+      - keycloak-network
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - .cert:/etc/nginx/certs
+
+  keycloak-server:
+    depends_on:
+      - keycloak-server-db
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    container_name: keycloak-server
+    environment:
+      <<: *keycloak-env
+      KC_DB_URL: jdbc:postgresql://keycloak-server-db:5432/keycloak
+    networks:
+      keycloak-network:
+        aliases:
+          - server.keycloak.local
+    command: ["start", "--optimized", "--hostname=server.keycloak.local"]
+
+  keycloak-server-db:
+    <<: *db-base
+    container_name: keycloak-server-db
+    volumes:
+      - .data/keycloak-server-db:/var/lib/postgresql/data
+
+  keycloak-client:
+    depends_on:
+      - keycloak-client-db
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    container_name: keycloak-client
+    environment:
+      <<: *keycloak-env
+      KC_DB_URL: jdbc:postgresql://keycloak-client-db:5432/keycloak
+    networks:
+      keycloak-network:
+        aliases:
+          - client.keycloak.local
+    command: ["start", "--optimized", "--hostname=client.keycloak.local"]
+
+  keycloak-client-db:
+    <<: *db-base
+    container_name: keycloak-client-db
+    volumes:
+      - .data/keycloak-client-db:/var/lib/postgresql/data
+
+networks:
+  keycloak-network:
+    driver: bridge
