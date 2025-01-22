@@ -1,8 +1,3 @@
-FROM gradle:jdk11 AS build
-WORKDIR /app
-COPY submodules/keycloak-scim/* /app/
-RUN gradle jar shadowjar
-
 FROM quay.io/keycloak/keycloak:26.0.5 AS keycloak
 
 ENV KC_DB=postgres
@@ -19,7 +14,7 @@ RUN keytool -import -trustcacerts \
 
 WORKDIR /opt/keycloak
 
-COPY --from=build /app/build/libs/* /opt/keycloak/providers/
+COPY client/keycloak-scim-1.0-SNAPSHOT-all.jar /opt/keycloak/providers/
 
 USER keycloak
 RUN /opt/keycloak/bin/kc.sh build
