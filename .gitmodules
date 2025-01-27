@@ -1,3 +1,0 @@
-[submodule "submodules/keycloak-scim"]
-	path = submodules/keycloak-scim
-	url = https://github.com/mitodl/keycloak-scim.git
