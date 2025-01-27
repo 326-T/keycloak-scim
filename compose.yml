@@ -64,7 +64,7 @@ services:
       - keycloak-client-db
     build:
       context: .
-      dockerfile: client/Dockerfile
+      dockerfile: server/Dockerfile
       no_cache: true
     container_name: keycloak-client
     environment:
