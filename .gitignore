@@ -151,5 +151,7 @@ gradle-app.setting
 
 # Local data
 .cert/
-.data/
+.data*/
 license-key-*.txt
+*.override.yaml
+*.override.yml
